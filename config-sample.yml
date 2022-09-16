@@ -1,0 +1,10 @@
+# Rename this file to config.yml after filling in your own details.
+
+version: 0.0.3
+api_type: X-Plane
+api_key: <api_key>
+api_host: "adsbx-flight-sim-traffic.p.rapidapi.com"
+lat: <decimal lat>
+lon: <decimal lon>
+criteria: all # mil, civil, or all
+max_distance: 10 # 1-25nm
