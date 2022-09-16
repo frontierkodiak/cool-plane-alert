@@ -31,8 +31,6 @@ class call_api:
     def get_nearby_traffic(self):
         if self.api_type == "X-Plane":
             api_return = get_nearby_traffic_xplane(self.lat, self.lon, self.api_key, self.api_host)
-            print("api_return:")
-            print(api_return)
         elif self.api_type == "openaip":
             print("OpenAIP API not yet implemented")
         else:
@@ -55,3 +53,29 @@ def get_nearby_traffic_xplane(lat, lon, api_key, api_host):
     planes = json.loads(decoded)
    # planes = planes["ac"]
     return planes
+
+def filter_planes(api_return, params):
+    max_distance = params.max_distance
+    planes = json.loads(api_return)['ac']
+    filtered_planes = []
+    if params.criteria == 'mil':
+        criteria_key = 'mil'
+        criteria_value = 1
+    elif params.criteria == 'civil':
+        criteria_key = 'mil'
+        criteria_value = 0
+    elif params.criteria == 'all':
+        criteria_key = None
+    else:
+        print("Invalid criteria")
+    # loop through all planes
+    for plane in planes:
+        # loop through all criteria
+        if criteria_key == None:
+            if float(plane['dst']) <= float(max_distance):
+                filtered_planes.append(plane)
+        else:
+            if float(plane['dst']) <= float(max_distance) and plane[criteria_key] == criteria_value:
+                filtered_planes.append(plane)
+    print("Found " + str(len(filtered_planes)) + " planes")
+    return filtered_planes
