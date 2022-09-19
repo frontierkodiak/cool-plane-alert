@@ -4,6 +4,7 @@ version: 0.0.3
 api_type: X-Plane
 api_key: <api_key>
 api_host: "adsbx-flight-sim-traffic.p.rapidapi.com"
+source_ac_db_path: assets/aircraft-database-complete-2022-09.csv
 lat: <decimal lat>
 lon: <decimal lon>
 criteria: all # mil, civil, or all

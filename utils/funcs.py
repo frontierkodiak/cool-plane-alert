@@ -2,6 +2,9 @@ import http.client
 import yaml
 import pathlib
 import json
+import pandas as pd
+import sqlite3 as sql
+import os
 
 class Params:
     def __init__(self, config_file):
@@ -10,6 +13,7 @@ class Params:
         self.api_type = self.config['api_type']
         self.api_key = self.config['api_key']
         self.api_host = self.config['api_host']
+        self.source_ac_db_path = self.config['source_ac_db_path']
         self.lat = self.config['default_lat']
         self.lon = self.config['default_lon']
         self.criteria = self.config['criteria']
@@ -55,6 +59,7 @@ def get_nearby_traffic_xplane(lat, lon, api_key, api_host):
     return planes
 
 def filter_planes(api_return, params):
+    '''Return filtered list of icao24 codes from api_return, given params'''
     max_distance = params.max_distance
     planes = json.loads(api_return)['ac']
     filtered_planes = []
@@ -73,9 +78,58 @@ def filter_planes(api_return, params):
         # loop through all criteria
         if criteria_key == None:
             if float(plane['dst']) <= float(max_distance):
-                filtered_planes.append(plane)
+                icao = plane['icao']
+                filtered_planes.append(icao)
         else:
             if float(plane['dst']) <= float(max_distance) and plane[criteria_key] == criteria_value:
-                filtered_planes.append(plane)
+                icao = plane['icao']
+                filtered_planes.append(icao)
     print("Found " + str(len(filtered_planes)) + " planes")
     return filtered_planes
+
+# def get_icao_from_api_return(api_return):
+#     '''Return list of icao24 codes from api_return'''
+#     planes = json.loads(api_return)['ac']
+#     icao_list = []
+#     for plane in planes:
+#         icao_list.append(plane['icao'])
+#     return icao_list
+
+
+def import_local_opensky_aircraft_database(path):
+    '''Import local opensky aircraft database, creates ac_db.db if it doesn't exist'''
+    # TODO: check if ac_db.db is up to date, etc.
+    # check if ac_db.db exists
+    ac_db_name = 'ac_db' # TODO: make this a param, which can be updated if using different data source, or if updating names by date etc. 
+    ac_db_fullname = ac_db_name + '.db'
+    if os.path.isfile(path):
+        print("ac_db.db exists")
+        # if it does, connect to it
+        conn = sql.connect(ac_db_fullname)
+    else:
+        print(ac_db_fullname + " does not exist, creating from " + path)
+        col_names = ['icao24', 'registration', 'manufacturericao', 'manufacturername', 'model', 'typecode', 'serialnumber', 'linenumber', 'icaoaircrafttype', 'operator', 'operatorcallsign', 'operatoricao', 'operatoriata', 'owner', 'testreg']
+        # load csv into pandas df
+        df = pd.read_csv(path, names=col_names,on_bad_lines="warn") #, encoding='cp1252'
+        # convert pandas df to sqlite db
+        conn = sql.connect(ac_db_fullname)
+        df.to_sql(ac_db_name, conn, if_exists='replace', index=False)
+    return conn
+
+def get_info_for_icao_list(icao_list, ac_db_conn):
+    '''Return pandas df of aircraft info for list of icao24 codes'''
+    # create empty df
+    df = pd.DataFrame()
+    # loop through icao_list
+    for icao in icao_list:
+        # get info for each icao
+        df = df.append(get_plane_info_from_opensky(icao, ac_db_conn))
+    return df
+
+def get_plane_info_from_opensky(icao, ac_db_conn):
+    # given icao, get plane info from ac_db
+    lowercase_icao = icao.lower()
+    query = "SELECT * FROM ac_db WHERE icao24 = '" + lowercase_icao + "'"
+    print(query)
+    df = pd.read_sql_query(query, ac_db_conn)
+    return df
