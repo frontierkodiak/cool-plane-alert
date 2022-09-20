@@ -14,9 +14,9 @@ api_return = json.dumps(call_api(params.api_type, params.lat, params.lon, params
 
 ac_db_conn = import_local_opensky_aircraft_database(params.source_ac_db_path)
 
-filtered_plane_icaos = filter_planes(api_return, params)
+filtered_plane_icaos, filtered_plane_distances = filter_planes(api_return, params)
 print(filtered_plane_icaos)
+print(filtered_plane_distances)
 
-
-plane_info = get_info_for_icao_list(filtered_plane_icaos, ac_db_conn)
-print(plane_info)
+filtered_plane_info_df = get_info_for_icao_list(filtered_plane_icaos, filtered_plane_distances, ac_db_conn) # returns df
+print(filtered_plane_info_df)

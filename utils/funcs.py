@@ -41,7 +41,6 @@ class call_api:
             print("Invalid API type")
         return api_return
 
-
 def get_nearby_traffic_xplane(lat, lon, api_key, api_host):
     conn = http.client.HTTPSConnection(str(api_host))
     headers = {
@@ -63,6 +62,7 @@ def filter_planes(api_return, params):
     max_distance = params.max_distance
     planes = json.loads(api_return)['ac']
     filtered_planes = []
+    filtered_distances = []
     if params.criteria == 'mil':
         criteria_key = 'mil'
         criteria_value = 1
@@ -80,12 +80,14 @@ def filter_planes(api_return, params):
             if float(plane['dst']) <= float(max_distance):
                 icao = plane['icao']
                 filtered_planes.append(icao)
+                filtered_distances.append(plane['dst'])
         else:
             if float(plane['dst']) <= float(max_distance) and plane[criteria_key] == criteria_value:
                 icao = plane['icao']
                 filtered_planes.append(icao)
+                filtered_distances.append(plane['dst'])
     print("Found " + str(len(filtered_planes)) + " planes")
-    return filtered_planes
+    return filtered_planes, filtered_distances
 
 # def get_icao_from_api_return(api_return):
 #     '''Return list of icao24 codes from api_return'''
@@ -116,14 +118,19 @@ def import_local_opensky_aircraft_database(path):
         df.to_sql(ac_db_name, conn, if_exists='replace', index=False)
     return conn
 
-def get_info_for_icao_list(icao_list, ac_db_conn):
+def get_info_for_icao_list(icao_list, filtered_plane_distances, ac_db_conn):
     '''Return pandas df of aircraft info for list of icao24 codes'''
     # create empty df
     df = pd.DataFrame()
     # loop through icao_list
+    i = 0
     for icao in icao_list:
+        dist = filtered_plane_distances[i]
         # get info for each icao
         df = df.append(get_plane_info_from_opensky(icao, ac_db_conn))
+        # add distance to this row of df
+        df.loc[df['icao24'] == icao.lower(), 'distance'] = dist
+        i += 1
     return df
 
 def get_plane_info_from_opensky(icao, ac_db_conn):
