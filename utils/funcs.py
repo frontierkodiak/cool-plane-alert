@@ -8,6 +8,7 @@ import pandas as pd
 import sqlite3 as sql
 import os
 import subprocess
+import random
 import datetime
 
 class Params:
@@ -64,8 +65,8 @@ def get_nearby_traffic_xplane(lat, lon, api_key, api_host):
     'X-RapidAPI-Host': str(api_host)
     }
     request_string = "/api/aircraft/json/lat/" + str(lat) + "/lon/" + str(lon) + "/dist/25/"
+    time.sleep(random.uniform(0.1, 4.5))
     conn.request("GET", request_string, headers=headers)
-
     res = conn.getresponse()
     data = res.read()
     decoded = data.decode("utf-8")
