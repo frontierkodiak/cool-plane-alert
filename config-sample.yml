@@ -1,6 +1,6 @@
 # Rename this file to config.yml after filling in your own details.
 
-version: 0.0.4
+version: 0.0.6
 api_type: X-Plane
 api_key: <api_key>
 api_host: "adsbx-flight-sim-traffic.p.rapidapi.com"
