@@ -8,7 +8,7 @@ import pandas as pd
 import sqlite3 as sql
 import os
 import subprocess
-import larynx
+import datetime
 
 class Params:
     def __init__(self, config_file):
@@ -102,17 +102,9 @@ def filter_planes(api_return, params):
                 icao = plane['icao']
                 filtered_planes.append(icao)
                 filtered_distances.append(plane['dst'])
-    print("Found " + str(len(filtered_planes)) + " planes")
+    now = str(datetime.datetime.now())
+    print(now + ": Found " + str(len(filtered_planes)) + " planes")
     return filtered_planes, filtered_distances
-
-# def get_icao_from_api_return(api_return):
-#     '''Return list of icao24 codes from api_return'''
-#     planes = json.loads(api_return)['ac']
-#     icao_list = []
-#     for plane in planes:
-#         icao_list.append(plane['icao'])
-#     return icao_list
-
 
 def import_local_opensky_aircraft_database(path):
     '''Import local opensky aircraft database, creates ac_db.db if it doesn't exist'''
@@ -170,5 +162,5 @@ def monitor_skies(ac_db_conn, params, interval):
             subprocess.run(["larynx", "-v", "scottish_english_male", "-q", "high", "--length-scale", "1.2", str(script.vocalization_string)])
         tf = time.time()
         vocalizing_time = tf - t0
-        wait_time = float(vocalizing_time - interval)
+        wait_time = float(interval - vocalizing_time)
         time.sleep(wait_time)
