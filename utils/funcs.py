@@ -1,10 +1,14 @@
 import http.client
+from multiprocessing.connection import wait
+import time
 import yaml
 import pathlib
 import json
 import pandas as pd
 import sqlite3 as sql
 import os
+import subprocess
+import larynx
 
 class Params:
     def __init__(self, config_file):
@@ -40,6 +44,18 @@ class call_api:
         else:
             print("Invalid API type")
         return api_return
+
+class vocalization_string:
+    def __init__(self, filtered_plane_info_df):
+        self.filtered_plane_info_df = filtered_plane_info_df
+        self.vocalization_string = self.get_vocalization_string()
+
+    def get_vocalization_string(self):
+        manufacturer = self.filtered_plane_info_df['manufacturername']
+        model = self.filtered_plane_info_df['model']
+        distance = self.filtered_plane_info_df['distance']
+        vocalization_string = "There is a " + manufacturer + " " + model + " " + distance + " miles away."
+        return vocalization_string
 
 def get_nearby_traffic_xplane(lat, lon, api_key, api_host):
     conn = http.client.HTTPSConnection(str(api_host))
@@ -104,7 +120,7 @@ def import_local_opensky_aircraft_database(path):
     # check if ac_db.db exists
     ac_db_name = 'ac_db' # TODO: make this a param, which can be updated if using different data source, or if updating names by date etc. 
     ac_db_fullname = ac_db_name + '.db'
-    if os.path.isfile(path):
+    if os.path.isfile(ac_db_fullname):
         print("ac_db.db exists")
         # if it does, connect to it
         conn = sql.connect(ac_db_fullname)
@@ -137,6 +153,22 @@ def get_plane_info_from_opensky(icao, ac_db_conn):
     # given icao, get plane info from ac_db
     lowercase_icao = icao.lower()
     query = "SELECT * FROM ac_db WHERE icao24 = '" + lowercase_icao + "'"
-    print(query)
     df = pd.read_sql_query(query, ac_db_conn)
     return df
+
+
+
+def monitor_skies(ac_db_conn, params, interval):
+    monitoring = True
+    while monitoring == True:
+        t0 = time.time()
+        api_return = json.dumps(call_api(params.api_type, params.lat, params.lon, params.api_key, params.api_host).nearby_traffic)
+        filtered_plane_icaos, filtered_plane_distances = filter_planes(api_return, params)
+        filtered_plane_info_df = get_info_for_icao_list(filtered_plane_icaos, filtered_plane_distances, ac_db_conn) # returns df
+        for i in range(len(filtered_plane_info_df)):
+            script = vocalization_string(filtered_plane_info_df.iloc[i])
+            subprocess.run(["larynx", "-v", "scottish_english_male", "-q", "high", "--length-scale", "1.2", str(script.vocalization_string)])
+        tf = time.time()
+        vocalizing_time = tf - t0
+        wait_time = float(vocalizing_time - interval)
+        time.sleep(wait_time)
