@@ -55,7 +55,7 @@ class vocalization_string:
         manufacturer = self.filtered_plane_info_df['manufacturername']
         model = self.filtered_plane_info_df['model']
         distance = self.filtered_plane_info_df['distance']
-        vocalization_string = "There is a " + manufacturer + " " + model + " " + distance + " miles away."
+        vocalization_string = "There is a " + manufacturer + " " + model + " " + round(distance) + " miles away."
         return vocalization_string
 
 def get_nearby_traffic_xplane(lat, lon, api_key, api_host):
