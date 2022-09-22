@@ -99,7 +99,7 @@ def filter_planes(api_return, params):
                 filtered_planes.append(icao)
                 filtered_distances.append(plane['dst'])
         else:
-            if float(plane['dst']) <= float(max_distance) and plane[criteria_key] == criteria_value:
+            if float(plane['dst']) <= float(max_distance) and int(plane[criteria_key]) == int(criteria_value):
                 icao = plane['icao']
                 filtered_planes.append(icao)
                 filtered_distances.append(plane['dst'])
@@ -160,7 +160,8 @@ def monitor_skies(ac_db_conn, params, interval):
         filtered_plane_info_df = get_info_for_icao_list(filtered_plane_icaos, filtered_plane_distances, ac_db_conn) # returns df
         for i in range(len(filtered_plane_info_df)):
             script = vocalization_string(filtered_plane_info_df.iloc[i])
-            subprocess.run(["larynx", "-v", "scottish_english_male", "-q", "high", "--length-scale", "1.2", str(script.vocalization_string)])
+            print(script.vocalization_string)
+            subprocess.run(["larynx", "-v", "scottish_english_male", "-q", "high", "--length-scale", "1.4", str(script.vocalization_string)])
         tf = time.time()
         vocalizing_time = tf - t0
         wait_time = float(interval - vocalizing_time)
