@@ -23,7 +23,7 @@ ___
 6. cool-plane-alert will announce when a cool plane is nearby! Ready your camera..
 
 ## Known issues:
-- [ ] Some plane names trigger a regex issue within Larynx, wherein the string is assumed to be a date, but the date obviously can't be parsed. Working on a fix.
+- [ ] Some aircraft model pronunciations are incorrect-- ex. "Boeing seven hundred and thirty-seven" rather than "Boeing seven-thirty-seven"
 
 ## Future:
 
