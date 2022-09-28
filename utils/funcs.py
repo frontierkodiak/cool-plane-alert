@@ -9,6 +9,7 @@ import sqlite3 as sql
 import os
 import subprocess
 import random
+import re
 import datetime
 
 class Params:
@@ -53,9 +54,24 @@ class vocalization_string:
 
     def get_vocalization_string(self):
         manufacturer = self.filtered_plane_info_df['manufacturername']
+        manufacturer = manufacturer.split(' ')[0]         # take just the first word of the manufacturer name
         model = self.filtered_plane_info_df['model']
-        distance = self.filtered_plane_info_df['distance']
-        vocalization_string = "There is a " + manufacturer + " " + model + " " + round(distance) + " miles away."
+        # strip dashes from model name
+        model = model.replace('-', '')
+        distance = float(self.filtered_plane_info_df['distance'])
+        # split model name into separate strings, based on letters and numbers
+        model = re.findall(r'[a-zA-Z]+|\d+', model)
+        # make ssml tags for each string. If string is a number, make it a cardinal number. If string is a letter, make it a word.
+        model_ssml = []
+        for i in model:
+            if i.isdigit():
+                model_ssml.append('<say-as interpret-as="number" format="cardinal">' + i + "</say-as>")
+            else:
+                model_ssml.append("<say-as interpret-as='spell-out'>" + i + "</say-as>" + '<break time="0.1s">' + '</break>')
+        # join the ssml tags into a single string
+        print(model_ssml)
+        model_ssml = ' '.join(model_ssml)
+        vocalization_string = "<speak>There is a " + manufacturer + " " + model_ssml + " " + '<say-as interpret-as="number" format="cardinal">' + str(round(distance)) +'</say-as>'  + " miles away.</speak>"
         return vocalization_string
 
 def get_nearby_traffic_xplane(lat, lon, api_key, api_host):
@@ -161,7 +177,7 @@ def monitor_skies(ac_db_conn, params, interval):
         for i in range(len(filtered_plane_info_df)):
             script = vocalization_string(filtered_plane_info_df.iloc[i])
             print(script.vocalization_string)
-            subprocess.run(["larynx", "-v", "scottish_english_male", "-q", "high", "--length-scale", "1.4", str(script.vocalization_string)])
+            subprocess.run(["larynx", "--ssml", "-v", "southern_english_male", "-q", "high", "--length-scale", "1.6", str(script.vocalization_string)])
         tf = time.time()
         vocalizing_time = tf - t0
         wait_time = float(interval - vocalizing_time)
