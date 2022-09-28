@@ -1,3 +1,4 @@
+![quick n' dirty cool plane alert logo](assets/cool_plane_alert.jpg)
 # cool-plane-alert
 Small tool to voice an alert when a cool plane is nearby, 
 
