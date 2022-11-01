@@ -9,3 +9,5 @@ lat: <decimal lat>
 lon: <decimal lon>
 criteria: all # mil, civil, or all
 max_distance: 10 # 1-25nm
+min_altitude: 100
+max_altitude: 12000

@@ -14,4 +14,4 @@ api_return = json.dumps(call_api(params.api_type, params.lat, params.lon, params
 
 ac_db_conn = import_local_opensky_aircraft_database(params.source_ac_db_path)
 
-monitor_skies(ac_db_conn, params, 60)
+monitor_skies(ac_db_conn, params, 240)

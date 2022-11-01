@@ -24,6 +24,8 @@ class Params:
         self.lon = self.config['default_lon']
         self.criteria = self.config['criteria']
         self.max_distance = self.config['max_distance']
+        self.min_altitude = self.config['min_altitude']
+        self.max_altitude = self.config['max_altitude']
     def read_config_yml():
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
@@ -110,12 +112,12 @@ def filter_planes(api_return, params):
     for plane in planes:
         # loop through all criteria
         if criteria_key == None:
-            if float(plane['dst']) <= float(max_distance):
+            if float(plane['dst']) <= float(max_distance) and float(plane['alt']) >= float(params.min_altitude) and float(plane['alt']) <= float(params.max_altitude):
                 icao = plane['icao']
                 filtered_planes.append(icao)
                 filtered_distances.append(plane['dst'])
         else:
-            if float(plane['dst']) <= float(max_distance) and int(plane[criteria_key]) == int(criteria_value):
+            if float(plane['dst']) <= float(max_distance) and int(plane[criteria_key]) == int(criteria_value) and float(plane['alt']) >= float(params.min_altitude) and float(plane['alt']) <= float(params.max_altitude):
                 icao = plane['icao']
                 filtered_planes.append(icao)
                 filtered_distances.append(plane['dst'])
