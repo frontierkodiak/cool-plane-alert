@@ -98,6 +98,7 @@ def filter_planes(api_return, params):
     planes = json.loads(api_return)['ac']
     filtered_planes = []
     filtered_distances = []
+    filtered_altitudes = []
     if params.criteria == 'mil':
         criteria_key = 'mil'
         criteria_value = 1
@@ -116,14 +117,16 @@ def filter_planes(api_return, params):
                 icao = plane['icao']
                 filtered_planes.append(icao)
                 filtered_distances.append(plane['dst'])
+                filtered_altitudes.append(plane['alt'])
         else:
             if float(plane['dst']) <= float(max_distance) and int(plane[criteria_key]) == int(criteria_value) and float(plane['alt']) >= float(params.min_altitude) and float(plane['alt']) <= float(params.max_altitude):
                 icao = plane['icao']
                 filtered_planes.append(icao)
                 filtered_distances.append(plane['dst'])
+                filtered_altitudes.append(plane['alt'])
     now = str(datetime.datetime.now())
     print(now + ": Found " + str(len(filtered_planes)) + " planes")
-    return filtered_planes, filtered_distances
+    return filtered_planes, filtered_distances, filtered_altitudes
 
 def import_local_opensky_aircraft_database(path):
     '''Import local opensky aircraft database, creates ac_db.db if it doesn't exist'''
@@ -145,7 +148,7 @@ def import_local_opensky_aircraft_database(path):
         df.to_sql(ac_db_name, conn, if_exists='replace', index=False)
     return conn
 
-def get_info_for_icao_list(icao_list, filtered_plane_distances, ac_db_conn):
+def get_info_for_icao_list(icao_list, filtered_plane_distances, filtered_plane_altitudes, ac_db_conn):
     '''Return pandas df of aircraft info for list of icao24 codes'''
     # create empty df
     df = pd.DataFrame()
@@ -153,10 +156,12 @@ def get_info_for_icao_list(icao_list, filtered_plane_distances, ac_db_conn):
     i = 0
     for icao in icao_list:
         dist = filtered_plane_distances[i]
+        alt = filtered_plane_altitudes[i]
         # get info for each icao
         df = df.append(get_plane_info_from_opensky(icao, ac_db_conn))
         # add distance to this row of df
         df.loc[df['icao24'] == icao.lower(), 'distance'] = dist
+        df.loc[df['icao24'] == icao.lower(), 'altitude'] = alt
         i += 1
     return df
 
@@ -174,8 +179,8 @@ def monitor_skies(ac_db_conn, params, interval):
     while monitoring == True:
         t0 = time.time()
         api_return = json.dumps(call_api(params.api_type, params.lat, params.lon, params.api_key, params.api_host).nearby_traffic)
-        filtered_plane_icaos, filtered_plane_distances = filter_planes(api_return, params)
-        filtered_plane_info_df = get_info_for_icao_list(filtered_plane_icaos, filtered_plane_distances, ac_db_conn) # returns df
+        filtered_plane_icaos, filtered_plane_distances, filtered_plane_altitudes = filter_planes(api_return, params)
+        filtered_plane_info_df = get_info_for_icao_list(filtered_plane_icaos, filtered_plane_distances, filtered_plane_altitudes, ac_db_conn) # returns df
         for i in range(len(filtered_plane_info_df)):
             script = vocalization_string(filtered_plane_info_df.iloc[i])
             print(script.vocalization_string)
