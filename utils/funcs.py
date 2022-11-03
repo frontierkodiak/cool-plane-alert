@@ -186,13 +186,18 @@ def monitor_skies(ac_db_conn, params, interval):
     while monitoring == True:
         t0 = time.time()
         api_return = json.dumps(call_api(params.api_type, params.lat, params.lon, params.api_key, params.api_host).nearby_traffic)
-        filtered_plane_icaos, filtered_plane_distances, filtered_plane_altitudes = filter_planes(api_return, params)
-        filtered_plane_info_df = get_info_for_icao_list(filtered_plane_icaos, filtered_plane_distances, filtered_plane_altitudes, ac_db_conn) # returns df
-        for i in range(len(filtered_plane_info_df)):
-            script = vocalization_string(filtered_plane_info_df.iloc[i])
-            print(script.vocalization_string)
-            subprocess.run(["larynx", "--ssml", "-v", "southern_english_male", "-q", "high", "--length-scale", "1.6", str(script.vocalization_string)])
-        tf = time.time()
-        vocalizing_time = tf - t0
-        wait_time = float(interval - vocalizing_time)
-        time.sleep(wait_time)
+        if api_return == "[]":
+            print("No planes found")
+            time.sleep(wait_time)
+            continue
+        else:
+            filtered_plane_icaos, filtered_plane_distances, filtered_plane_altitudes = filter_planes(api_return, params)
+            filtered_plane_info_df = get_info_for_icao_list(filtered_plane_icaos, filtered_plane_distances, filtered_plane_altitudes, ac_db_conn) # returns df
+            for i in range(len(filtered_plane_info_df)):
+                script = vocalization_string(filtered_plane_info_df.iloc[i])
+                print(script.vocalization_string)
+                subprocess.run(["larynx", "--ssml", "-v", "southern_english_male", "-q", "high", "--length-scale", "1.6", str(script.vocalization_string)])
+            tf = time.time()
+            vocalizing_time = tf - t0
+            wait_time = float(interval - vocalizing_time)
+            time.sleep(wait_time)
