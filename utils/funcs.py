@@ -26,6 +26,7 @@ class Params:
         self.max_distance = self.config['max_distance']
         self.min_altitude = self.config['min_altitude']
         self.max_altitude = self.config['max_altitude']
+        self.do_not_repeat_for = self.config['do_not_repeat_for']
     def read_config_yml():
         with open("config.yml", 'r') as ymlfile:
             cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
@@ -55,9 +56,11 @@ class vocalization_string:
         self.vocalization_string = self.get_vocalization_string()
 
     def get_vocalization_string(self):
-        manufacturer = self.filtered_plane_info_df['manufacturername']
+        manufacturer = str(self.filtered_plane_info_df['manufacturername'])
         manufacturer = manufacturer.split(' ')[0]         # take just the first word of the manufacturer name
-        model = self.filtered_plane_info_df['model']
+        if manufacturer == 'nan':
+            manufacturer = 'unknown'
+        model = str(self.filtered_plane_info_df['model'])
         # strip dashes from model name
         model = model.replace('-', '')
         distance = float(self.filtered_plane_info_df['distance'])
@@ -73,6 +76,8 @@ class vocalization_string:
         # join the ssml tags into a single string
         print(model_ssml)
         model_ssml = ' '.join(model_ssml)
+        if model[0] == 'nan':
+            model_ssml = 'aircraft'
         vocalization_string = "<speak>There is a " + manufacturer + " " + model_ssml + " " + '<say-as interpret-as="number" format="cardinal">' + str(round(distance)) +'</say-as>'  + " miles away.</speak>"
         return vocalization_string
 
@@ -155,13 +160,14 @@ def get_info_for_icao_list(icao_list, filtered_plane_distances, filtered_plane_a
     # loop through icao_list
     i = 0
     for icao in icao_list:
-        dist = filtered_plane_distances[i]
-        alt = filtered_plane_altitudes[i]
+        dist = float(filtered_plane_distances[i])
+        alt = float(filtered_plane_altitudes[i])
         # get info for each icao
         df = df.append(get_plane_info_from_opensky(icao, ac_db_conn))
-        # add distance to this row of df
-        df.loc[df['icao24'] == icao.lower(), 'distance'] = dist
-        df.loc[df['icao24'] == icao.lower(), 'altitude'] = alt
+        df = df.append({'distance': dist, 'altitude': alt}, ignore_index=True)
+        # add distance and altitude to df
+        # df.loc[df['icao24'] == icao.lower(), 'distance'] = dist
+        # df.loc[df['icao24'] == icao.lower(), 'altitude'] = alt
         i += 1
     return df
 
@@ -170,6 +176,7 @@ def get_plane_info_from_opensky(icao, ac_db_conn):
     lowercase_icao = icao.lower()
     query = "SELECT * FROM ac_db WHERE icao24 = '" + lowercase_icao + "'"
     df = pd.read_sql_query(query, ac_db_conn)
+    # then, we'll add columns for distance and altitude. 
     return df
 
 

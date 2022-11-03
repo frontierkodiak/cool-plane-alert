@@ -11,3 +11,4 @@ criteria: all # mil, civil, or all
 max_distance: 10 # 1-25nm
 min_altitude: 100
 max_altitude: 12000
+do_not_repeat_for: 240 # seconds. After they are first announced, airframes often appear in subsequent API calls. What is the minimum amount of time that should pass until the same airframe is announced a second time?
