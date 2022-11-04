@@ -64,6 +64,8 @@ class vocalization_string:
         # strip dashes from model name
         model = model.replace('-', '')
         distance = float(self.filtered_plane_info_df['distance'])
+        distance = round(distance, 1)
+        print("distance: " + str(distance))
         if model == 'nan':
             model_ssml = 'aircraft'
         else:
@@ -79,7 +81,10 @@ class vocalization_string:
             # join the ssml tags into a single string
             print(model_ssml)
             model_ssml = ' '.join(model_ssml)
-        vocalization_string = "<speak>There is a " + manufacturer + " " + model_ssml + " " + '<say-as interpret-as="number" format="cardinal">' + str(round(distance)) +'</say-as>'  + " miles away.</speak>"
+        if distance == 'nan':
+            vocalization_string = "<speak>There is a " + manufacturer + " " + model_ssml + " " + "nearby. </speak>"
+        else:
+            vocalization_string = "<speak>There is a " + manufacturer + " " + model_ssml + " " + '<say-as interpret-as="number" format="cardinal">' + str(round(distance)) +'</say-as>'  + " miles away.</speak>"
         return vocalization_string
 
 def get_nearby_traffic_xplane(lat, lon, api_key, api_host):
