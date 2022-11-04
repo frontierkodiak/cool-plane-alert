@@ -64,20 +64,21 @@ class vocalization_string:
         # strip dashes from model name
         model = model.replace('-', '')
         distance = float(self.filtered_plane_info_df['distance'])
-        # split model name into separate strings, based on letters and numbers
-        model = re.findall(r'[a-zA-Z]+|\d+', model)
-        # make ssml tags for each string. If string is a number, make it a cardinal number. If string is a letter, make it a word.
-        model_ssml = []
-        for i in model:
-            if i.isdigit():
-                model_ssml.append('<say-as interpret-as="number" format="cardinal">' + i + "</say-as>")
-            else:
-                model_ssml.append("<say-as interpret-as='spell-out'>" + i + "</say-as>" + '<break time="0.1s">' + '</break>')
-        # join the ssml tags into a single string
-        print(model_ssml)
-        model_ssml = ' '.join(model_ssml)
-        if model[0] == 'nan':
+        if model == 'nan':
             model_ssml = 'aircraft'
+        else:
+            # split model name into separate strings, based on letters and numbers
+            model = re.findall(r'[a-zA-Z]+|\d+', model)
+            # make ssml tags for each string. If string is a number, make it a cardinal number. If string is a letter, make it a word.
+            model_ssml = []
+            for i in model:
+                if i.isdigit():
+                    model_ssml.append('<say-as interpret-as="number" format="cardinal">' + i + "</say-as>")
+                else:
+                    model_ssml.append("<say-as interpret-as='spell-out'>" + i + "</say-as>" + '<break time="0.1s">' + '</break>')
+            # join the ssml tags into a single string
+            print(model_ssml)
+            model_ssml = ' '.join(model_ssml)
         vocalization_string = "<speak>There is a " + manufacturer + " " + model_ssml + " " + '<say-as interpret-as="number" format="cardinal">' + str(round(distance)) +'</say-as>'  + " miles away.</speak>"
         return vocalization_string
 
