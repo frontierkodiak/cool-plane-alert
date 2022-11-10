@@ -81,7 +81,7 @@ class vocalization_string:
             # join the ssml tags into a single string
             print(model_ssml)
             model_ssml = ' '.join(model_ssml)
-        if distance == 'nan':
+        if str(distance) == 'nan':
             vocalization_string = "<speak>There is a " + manufacturer + " " + model_ssml + " " + "nearby. </speak>"
         else:
             vocalization_string = "<speak>There is a " + manufacturer + " " + model_ssml + " " + '<say-as interpret-as="number" format="cardinal">' + str(round(distance)) +'</say-as>'  + " miles away.</speak>"
